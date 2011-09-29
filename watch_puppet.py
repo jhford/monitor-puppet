@@ -53,14 +53,14 @@ def process_line(line):
 
 def watch(filename):
     log = open(filename)
-    try:
-        while True:
+    while True:
+        try:
             data = log.readline().strip()
             if data == '':
                 time.sleep(0.5)
             process_line(data)
-    except IOError:
-        log = open(filename)
+        except IOError:
+            log = open(filename)
     log.close()
 
 def main():
@@ -74,3 +74,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
