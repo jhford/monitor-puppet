@@ -1,17 +1,33 @@
 #!/usr/bin/env python
 
 import sys
+import os
+import socket # for socket.gethostname()
 import re
 import subprocess
 import time
+import smtplib
+try:
+    import email.mime.text.MIMEText as MIMEText
+except ImportError:
+    # Old versions of python don't use the new module names
+    import email.MIMEText.MIMEText as MIMEText
+
 
 invalid_cert = re.compile('(?P<datetime>\w* \d* \d*:\d*:\d*) (?P<p_master>[\w.\-_]*) puppetmasterd\[\d*\]: Certificate request does not match existing certificate; run \'(?P<suggestion>.*)\'.')
 waiting_cert = re.compile('(?P<datetime>\w* \d* \d*:\d*:\d*) (?P<p_master>[\w.\-_]*) puppetmasterd\[\d*\]: Host (?P<hostname>[\w\d\-_.]*) has a waiting certificate request')
 suggestion_parse = re.compile('puppetca --clean (?P<hostname>[\w\d\-._]*)')
 
-def email(subject,body):
-    print 'S: %s' % subject
-    print body
+def email(subject,body,to='jhford@mozilla.com', sender=None):
+    if sender is None:
+        sender = '%s@%s' % (os.getlogin(), socket.gethostname())
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['To'] = to
+    msg['From'] = sender
+    print 'Emailing this:\n====================\n%s' % str(msg)
+    s = smtplib.SMTP('localhost')
+    s.sendmail(sender, to, msg.as_string())
 
 def handle_invalid_cert(p_master, datetime, suggestion):
     hostname = suggestion_parse.match(suggestion).group("hostname")
