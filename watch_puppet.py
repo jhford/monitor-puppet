@@ -8,14 +8,14 @@ import subprocess
 import time
 import smtplib
 try:
-    import email.mime.text.MIMEText as MIMEText
+    from email.mime.text import MIMEText
 except ImportError:
     # Old versions of python don't use the new module names
-    import email.MIMEText.MIMEText as MIMEText
+    from email.MIMEText import MIMEText
 
 
-invalid_cert = re.compile('(?P<datetime>\w* \d* \d*:\d*:\d*) (?P<p_master>[\w.\-_]*) puppetmasterd\[\d*\]: Certificate request does not match existing certificate; run \'(?P<suggestion>.*)\'.')
-waiting_cert = re.compile('(?P<datetime>\w* \d* \d*:\d*:\d*) (?P<p_master>[\w.\-_]*) puppetmasterd\[\d*\]: Host (?P<hostname>[\w\d\-_.]*) has a waiting certificate request')
+invalid_cert = re.compile('(?P<datetime>\w*\W*\d* \d*:\d*:\d*) (?P<p_master>[\w.\-_]*) puppetmasterd\[\d*\]: Certificate request does not match existing certificate; run \'(?P<suggestion>.*)\'.')
+waiting_cert = re.compile('(?P<datetime>\w*\W*\d* \d*:\d*:\d*) (?P<p_master>[\w.\-_]*) puppetmasterd\[\d*\]: Host (?P<hostname>[\w\d\-_.]*) has a waiting certificate request')
 suggestion_parse = re.compile('puppetca --clean (?P<hostname>[\w\d\-._]*)')
 
 def email(subject,body,to='jhford@mozilla.com', sender=None):
@@ -69,6 +69,7 @@ def process_line(line):
 
 def watch(filename):
     log = open(filename)
+    log.seek(0,2) # Only want to look at *new* things
     while True:
         try:
             data = log.readline().strip()
@@ -77,11 +78,12 @@ def watch(filename):
             process_line(data)
         except IOError:
             log = open(filename)
+            log.seek(0,2) # Only want to look at *new* things
     log.close()
 
 def main():
     if len(sys.argv) != 2:
-        print >> sys.stderr, "usage: %s /var/log/messages" % sys.argv[0]
+        print "usage: %s /var/log/messages" % sys.argv[0]
         exit(1)
     else:
         print "Watching %s" % sys.argv[1]
@@ -90,6 +92,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
 
