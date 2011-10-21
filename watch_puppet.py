@@ -88,7 +88,7 @@ def main():
         exit(1)
     else:
         print "Watching %s" % sys.argv[1]
-        watch(sys.argv[1], sys.argv[1], sender)
+        watch(sys.argv[1], sys.argv[2], sender)
 
 
 if __name__ == "__main__":
