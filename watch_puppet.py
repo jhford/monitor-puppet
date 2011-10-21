@@ -83,8 +83,8 @@ def watch(filename, to, sender):
 
 def main():
     sender = '%s@%s' % (os.getlogin(), socket.gethostname())
-    if len(sys.argv) != 2:
-        print "usage: %s /var/log/messages" % sys.argv[0]
+    if len(sys.argv) != 3:
+        print "usage: %s /var/log/messages user@host.to.send.to" % sys.argv[0]
         exit(1)
     else:
         print "Watching %s" % sys.argv[1]
