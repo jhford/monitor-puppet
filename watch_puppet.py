@@ -13,6 +13,8 @@ except ImportError:
     # Old versions of python don't use the new module names
     from email.MIMEText import MIMEText
 
+# These regexes and functions should be abstracted.  Maybe a
+# class with Handler.check(line) and Handler.handle(line)
 
 invalid_cert = re.compile('(?P<datetime>\w*\W*\d* \d*:\d*:\d*) (?P<p_master>[\w.\-_]*) puppetmasterd\[\d*\]: Certificate request does not match existing certificate; run \'(?P<suggestion>.*)\'.')
 waiting_cert = re.compile('(?P<datetime>\w*\W*\d* \d*:\d*:\d*) (?P<p_master>[\w.\-_]*) puppetmasterd\[\d*\]: Host (?P<hostname>[\w\d\-_.]*) has a waiting certificate request')
@@ -33,16 +35,14 @@ def handle_invalid_cert(p_master, datetime, suggestion, to, sender):
     subject = "[%s] %s has invalid cert" % (p_master, hostname)
     body = """The puppet slave '%s' has an invalid puppet cert.
 I tried cleaning it up manually, but I didn't check return codes.
-Please make sure that this was done properly.  I won't automatically
-try to sign a slave for security, so please sign it yourself!""" %hostname
+Please make sure that this was done properly.""" %hostname
     email(subject,body,to,sender)
 
 
 def handle_waiting_cert(p_master, datetime, hostname, to, sender):
     subject = "[%s] %s is waiting to be signed" % (p_master, hostname)
-    body = """The puppet slave '%s' has a waiting puppet signing request
-I won't automatically try to sign a slave for security, so please
-sign it yourself!""" %hostname
+    body = """The puppet slave '%s' has a waiting puppet signing request.
+It will probably be signed automatically by accept-hostname-keys.sh""" %hostname
     email(subject,body,to,sender)
 
 
@@ -77,6 +77,8 @@ def watch(filename, to, sender):
                 time.sleep(0.5)
             process_line(data, to, sender)
         except IOError:
+            # There is a bug here because failing to open the file
+            # the second time isn't caught and is fatal
             log = open(filename)
             log.seek(0,2) # Only want to look at *new* things
     log.close()
@@ -92,5 +94,7 @@ def main():
 
 
 if __name__ == "__main__":
+    # should probably daemonize and write logs (properly) to
+    # the syslog
     main()
 
